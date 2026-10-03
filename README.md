@@ -1,6 +1,6 @@
 ---
 layout: default
-title: "SISTEMES D'INICI"
+title: "Sistemes d'inici i gestio serveis"
 ---
 
 # SISTEMES D'INICI
@@ -11,12 +11,12 @@ title: "SISTEMES D'INICI"
 
 - 1.1- Runlevels o Targets?
 - 1.2- Quin el nostre SO?
-  **2- SystemV**
+
+**2- SystemV**
 - 2.1- Directoris
 - 2.2- Procés arrencada
 
 **3- Systemd**
-
 - 3.1- Directoris
 - 3.2- systemctl
 - 3.3- dependències
@@ -66,7 +66,7 @@ Comprovar amb `get-default `i `system analyze` que s'ha canviat.
 | `wget -qO sliver-server https://github.com/BishopFox/sliver/releases/download/v1.7.6/sliver-server_linux-amd64` | `curl https://sliver.sh/install \| sudo bash` |
 
 
-![alt text](image.png)
+![alt text](images/image.png)
 
 Respecte el binari, l'he generat elegint mTLS perque no molta gent el coneix.
 - I iniciat el 'listener'

