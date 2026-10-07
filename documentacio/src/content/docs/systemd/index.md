@@ -3,10 +3,9 @@ template: doc
 title: "Sistemes d'inici i gestió de serveis"
 ---
 
-
 ## SystemV, Upstart i Systemd
 
-**SystemV, Upstart i systemd** són diferents sistemes d'inici i gestió de serveis. SystemV utilitza *runlevels*, mentre que systemd utilitza *targets*, que són el seu equivalent modern. Upstart és un sistema intermedi basat en esdeveniments. En el nostre sistema operatiu utilitzem **systemd**.
+**SystemV, Upstart i systemd** són diferents sistemes d'inici i gestió de serveis. SystemV utilitza _runlevels_, mentre que systemd utilitza _targets_, que són el seu equivalent modern. Upstart és un sistema intermedi basat en esdeveniments. En el nostre sistema operatiu utilitzem **systemd**.
 
 En SystemV, els principals directoris relacionats amb l'inici són:
 
@@ -19,17 +18,19 @@ En SystemV, els principals directoris relacionats amb l'inici són:
 - `/etc/rc5.d/` → nivell 5 (mode gràfic).
 - `/etc/rc6.d/` → nivell 6 (reinici).
 
-Els directoris `rc*.d` contenen enllaços als scripts de `/etc/init.d/`. Les lletres `S` i `K` indiquen, respectivament, iniciar (*Start*) i aturar (*Kill*) un servei.
+Els directoris `rc*.d` contenen enllaços als scripts de `/etc/init.d/`. Les lletres `S` i `K` indiquen, respectivament, iniciar (_Start_) i aturar (_Kill_) un servei.
 
 ## Conceptes
+
 ::::note
+
 - **Kernel** → gestiona processos i recursos del sistema.
 - **Aplicació** → programa amb què interactua l'usuari i que s'executa en primer pla.
 - **Servei** → programa associat al sistema operatiu que s'executa habitualment en segon pla.
 - **Procés** → instància d'un programa en execució gestionada pel sistema operatiu.
 
 > **Nota:** les aplicacions i els serveis generen processos que són sincronitzats i planificats pel sistema operatiu.
-::::
+> ::::
 
 ### Nivells d'execució i targets
 
@@ -50,8 +51,8 @@ La configuració utilitzada en aquesta pràctica inclou un entorn C2[^1] i un se
 
 Per instal·lar Sliver he utilitzat el binari proporcionat pel projecte, tot i que també existeix un script d'instal·lació automàtica.
 
-| Instal·lació amb binari | Instal·lació automàtica |
-|---|---|
+| Instal·lació amb binari                                                                                         | Instal·lació automàtica                       |
+| --------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | `wget -qO sliver-server https://github.com/BishopFox/sliver/releases/download/v1.7.6/sliver-server_linux-amd64` | `curl https://sliver.sh/install \| sudo bash` |
 
 ![Instal·lació de Sliver](./images/image.png)
@@ -88,6 +89,10 @@ Finalment, he iniciat el servidor amb la configuració per defecte.
 
 ![Execució de MediaMTX](./images/image-13.png)
 
+Aquesta eina permet retransmetre, guardar els videos/ contingut i més amb un configuració `simple` de yml, però se pot usar sense i per defecte actuara com servidor que reb els videos.
+
+- Permet molts protocols, com WebRTC, RSTP, HLS, raspberry cameres, etc
+
 ## Configuració de la víctima
 
 A continuació he creat el `target` i el servei de `systemd`, he habilitat el servei i he configurat els permisos d'execució corresponents.
@@ -95,6 +100,11 @@ A continuació he creat el `target` i el servei de `systemd`, he habilitat el se
 ### Script de captura amb FFmpeg
 
 L'script utilitzat per enviar els fotogrames de vídeo és el següent:
+
+Dependencia victima: sudo apt install ffmpeg
+Dependencia atacant: ffplay
+
+Ho fa mitjançat el protocol de streaming RSTP.
 
 ```bash title="/sbin/ubuntu-security"
 #!/bin/env bash
@@ -130,6 +140,10 @@ done
 ```
 
 ![Execució de FFmpeg](./images/image-15.png)
+
+Aquesta part es podria ampliar a una infraestructura més gran amb serveis de monitoratge cameres com Shinobi (+AI), Frigate, UnifiProtect (AI)
+
+Que alguns tenen integració en IA que podria vigilar moments claus.
 
 ### Target personalitzat
 
@@ -211,7 +225,6 @@ ffplay rtsp://127.0.0.1:8554/screen
 
 ![Streaming en directe](./images/testLive.gif)
 
-
 [^1]: SentinelOne. (2025, 13 agosto). ¿Qué son los servidores de comando y control (C2)? SentinelOne. https://www.sentinelone.com/es/cybersecurity-101/threat-intelligence/what-are-command-control-c2-servers/
 
-> Controlador central de *backend* operat per l'atacant per coordinar els atacs, enviar càrregues útils i gestionar les dades sostretes.
+> Controlador central de _backend_ operat per l'atacant per coordinar els atacs, enviar càrregues útils i gestionar les dades sostretes.
